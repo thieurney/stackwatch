@@ -70,3 +70,26 @@ def test_snapshot_filename_safe_chars(tmp_path):
     state = make_state("arn/my/stack")
     path = save_snapshot(state, label="env/prod", directory=str(tmp_path))
     assert "/" not in os.path.basename(path)
+
+
+def test_save_overwrites_existing_snapshot(tmp_path):
+    """Saving a snapshot with the same stack name and label should overwrite the previous one."""
+    state_v1 = make_state()
+    state_v2 = StackState(
+        stack_name="my-stack",
+        status="CREATE_COMPLETE",
+        parameters={"Env": "staging"},
+        outputs={},
+        tags={},
+    )
+
+    save_snapshot(state_v1, label="baseline", directory=str(tmp_path))
+    save_snapshot(state_v2, label="baseline", directory=str(tmp_path))
+
+    loaded = load_snapshot("my-stack", label="baseline", directory=str(tmp_path))
+    assert loaded is not None
+    assert loaded.status == "CREATE_COMPLETE"
+    assert loaded.parameters == {"Env": "staging"}
+    # Only one snapshot should exist for the same stack+label
+    snapshots = list_snapshots(directory=str(tmp_path))
+    assert len(snapshots) == 1
