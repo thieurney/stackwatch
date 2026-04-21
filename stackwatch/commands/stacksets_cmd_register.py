@@ -1,0 +1,1 @@
+from stackwatch.commands.stacksets_cmd import add_stacksets_subcommand
