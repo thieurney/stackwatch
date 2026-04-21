@@ -1,0 +1,1 @@
+from stackwatch.commands.permissions_cmd import add_permissions_subcommand
