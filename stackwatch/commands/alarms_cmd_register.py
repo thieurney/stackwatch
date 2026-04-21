@@ -1,0 +1,1 @@
+from stackwatch.commands.alarms_cmd import add_alarms_subcommand
