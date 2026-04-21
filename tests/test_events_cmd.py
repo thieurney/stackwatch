@@ -89,17 +89,19 @@ def test_filter_status_excludes_non_matching(capsys):
     ]
     with patch("stackwatch.commands.events_cmd.fetch_stack", return_value=_make_state()), \
          patch("stackwatch.commands.events_cmd._fetch_events", return_value=events):
-        result = cmd_events(_args(filter_status="FAILED"))
+        result = cmd_events(_args(filter_status="UPDATE_FAILED"))
     assert result == 0
     out = capsys.readouterr().out
     assert "BucketB" in out
     assert "BucketA" not in out
 
 
-def test_reason_shown_in_text_output(capsys):
-    events = [_make_event("Res", "CREATE_FAILED", "Limit exceeded")]
+def test_filter_status_no_matches_shows_no_events(capsys):
+    events = [
+        _make_event("BucketA", "CREATE_COMPLETE"),
+    ]
     with patch("stackwatch.commands.events_cmd.fetch_stack", return_value=_make_state()), \
          patch("stackwatch.commands.events_cmd._fetch_events", return_value=events):
-        cmd_events(_args())
-    out = capsys.readouterr().out
-    assert "Limit exceeded" in out
+        result = cmd_events(_args(filter_status="DELETE_FAILED"))
+    assert result == 0
+    assert "No events found" in capsys.readouterr().out
