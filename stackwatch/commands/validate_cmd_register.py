@@ -1,0 +1,1 @@
+from stackwatch.commands.validate_cmd import add_validate_subcommand
