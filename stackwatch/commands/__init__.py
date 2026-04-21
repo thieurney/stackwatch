@@ -1,3 +1,1 @@
-from stackwatch.commands.snapshot_cmd import add_snapshot_subcommands
-from stackwatch.commands.compare_cmd import add_compare_subcommand
-from stackwatch.commands.history_cmd import add_history_subcommands
+# commands package
