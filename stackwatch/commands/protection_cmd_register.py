@@ -1,0 +1,1 @@
+from stackwatch.commands.protection_cmd import add_protection_subcommand
