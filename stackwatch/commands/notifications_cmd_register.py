@@ -1,0 +1,1 @@
+from stackwatch.commands.notifications_cmd import add_notifications_subcommand
