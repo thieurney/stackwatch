@@ -1,0 +1,1 @@
+from stackwatch.commands.signals_cmd import add_signals_subcommand
