@@ -1,0 +1,1 @@
+from stackwatch.commands.lineage_cmd import add_lineage_subcommand
