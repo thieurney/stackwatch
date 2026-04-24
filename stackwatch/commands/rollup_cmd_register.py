@@ -1,0 +1,1 @@
+from stackwatch.commands.rollup_cmd import add_rollup_subcommand
