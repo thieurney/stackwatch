@@ -78,3 +78,17 @@ def test_sleep_called_with_interval():
          patch("stackwatch.commands.watch_cmd.time.sleep") as mock_sleep:
         cmd_watch(args)
     mock_sleep.assert_called_with(10)
+
+
+def test_sleep_called_between_polls():
+    """Verify sleep is called once per poll cycle, not just on the final iteration."""
+    states = [make_state(), make_state(), make_state()]
+    args = _args(interval=7)
+    side_effects = states + [KeyboardInterrupt()]
+
+    with patch("stackwatch.commands.watch_cmd.fetch_stack", side_effect=side_effects), \
+         patch("stackwatch.commands.watch_cmd.time.sleep") as mock_sleep:
+        cmd_watch(args)
+
+    assert mock_sleep.call_count == len(states)
+    mock_sleep.assert_called_with(7)
