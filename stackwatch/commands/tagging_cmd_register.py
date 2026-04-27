@@ -1,0 +1,1 @@
+from stackwatch.commands.tagging_cmd import add_tagging_subcommand
