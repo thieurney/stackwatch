@@ -1,0 +1,1 @@
+from stackwatch.commands.budgets_cmd import add_budgets_subcommand
