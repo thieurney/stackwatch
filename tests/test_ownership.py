@@ -1,90 +1,89 @@
-"""Tests for stackwatch.ownership module."""
-from __future__ import annotations
-
+"""Tests for stackwatch.ownership."""
 from stackwatch.fetcher import StackState
 from stackwatch.ownership import (
     OwnershipInfo,
     build_ownership_info,
-    format_ownership_info,
+    format_ownership_plain,
 )
 
 
-def _make_state(tags: dict) -> StackState:
+def _make_state(tags: dict | None = None) -> StackState:
     return StackState(
         name="my-stack",
         status="UPDATE_COMPLETE",
         parameters={},
-        tags=tags,
+        tags=tags or {},
         outputs=[],
         capabilities=[],
-        termination_protection=True,
+        termination_protection=False,
         creation_time=None,
-        last_updated_time=None,
-        description=None,
-        role_arn=None,
-        notification_arns=[],
+        last_updated=None,
+        description="",
     )
 
 
-def test_build_ownership_all_present():
-    state = _make_state({"Owner": "alice", "Team": "platform", "CostCenter": "CC-42"})
-    info = build_ownership_info(state)
-    assert info.owner == "alice"
-    assert info.team == "platform"
-    assert info.cost_center == "CC-42"
-    assert info.is_complete is True
-    assert info.has_owner is True
-
-
-def test_build_ownership_lowercase_keys():
-    state = _make_state({"owner": "bob", "team": "data", "cost-center": "CC-99"})
-    info = build_ownership_info(state)
-    assert info.owner == "bob"
-    assert info.team == "data"
-    assert info.cost_center == "CC-99"
-
-
-def test_build_ownership_missing_fields():
-    state = _make_state({"Owner": "carol"})
-    info = build_ownership_info(state)
-    assert info.owner == "carol"
-    assert info.team is None
-    assert info.cost_center is None
-    assert info.is_complete is False
-    assert info.has_owner is True
-
-
-def test_build_ownership_no_tags():
-    state = _make_state({})
-    info = build_ownership_info(state)
+def test_no_tags_returns_unowned():
+    info = build_ownership_info(_make_state())
     assert info.owner is None
     assert info.team is None
-    assert info.cost_center is None
-    assert info.has_owner is False
-    assert info.is_complete is False
+    assert info.environment is None
+    assert not info.is_owned
 
 
-def test_format_ownership_plain_no_color():
+def test_owner_tag_detected():
+    info = build_ownership_info(_make_state({"Owner": "alice"}))
+    assert info.owner == "alice"
+    assert info.is_owned
+
+
+def test_lowercase_owner_tag_detected():
+    info = build_ownership_info(_make_state({"owner": "bob"}))
+    assert info.owner == "bob"
+
+
+def test_team_tag_detected():
+    info = build_ownership_info(_make_state({"Team": "platform"}))
+    assert info.team == "platform"
+    assert info.is_owned
+
+
+def test_env_tag_detected():
+    info = build_ownership_info(_make_state({"Environment": "production"}))
+    assert info.environment == "production"
+
+
+def test_extra_tags_captured():
+    info = build_ownership_info(_make_state({"Owner": "alice", "CostCenter": "cc-42"}))
+    assert info.extra_tags == {"CostCenter": "cc-42"}
+
+
+def test_format_plain_owned():
     info = OwnershipInfo(
-        stack_name="demo",
-        owner="alice",
-        team="platform",
-        cost_center="CC-1",
+        stack_name="svc-stack",
+        owner="carol",
+        team="backend",
+        environment="staging",
     )
-    out = format_ownership_info(info, use_color=False)
-    assert "demo" in out
-    assert "alice" in out
-    assert "platform" in out
-    assert "CC-1" in out
+    out = format_ownership_plain(info)
+    assert "carol" in out
+    assert "backend" in out
+    assert "staging" in out
+    assert "WARNING" not in out
 
 
-def test_format_ownership_unset_shown():
-    info = OwnershipInfo(stack_name="demo", owner=None, team=None, cost_center=None)
-    out = format_ownership_info(info, use_color=False)
+def test_format_plain_unowned_shows_warning():
+    info = OwnershipInfo(stack_name="orphan")
+    out = format_ownership_plain(info)
+    assert "WARNING" in out
     assert "(unset)" in out
 
 
-def test_raw_tags_stored():
-    state = _make_state({"Owner": "x", "Env": "prod"})
-    info = build_ownership_info(state)
-    assert info.raw_tags["Env"] == "prod"
+def test_format_plain_extra_tags_shown():
+    info = OwnershipInfo(
+        stack_name="svc",
+        owner="dave",
+        extra_tags={"CostCenter": "cc-99"},
+    )
+    out = format_ownership_plain(info)
+    assert "CostCenter" in out
+    assert "cc-99" in out
