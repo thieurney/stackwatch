@@ -1,0 +1,1 @@
+from stackwatch.commands.coverage_cmd import add_coverage_subcommand
